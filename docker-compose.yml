@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: attendance_postgres
+    ports:
+      - "5474:5432"
+    environment:
+      POSTGRES_DB: attendance_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin834
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./Backend
+    container_name: attendance_backend
+    ports:
+      - "3076:3076"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3076
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: admin834
+      DB_NAME: attendance_system
+
+  frontend:
+    build: ./Frontend
+    container_name: attendance_frontend
+    ports:
+      - "8104:80"
+
+  hr:
+    build: ./HR
+    container_name: attendance_hr
+    ports:
+      - "8105:80"
+
+volumes:
+  postgres_data:
+
